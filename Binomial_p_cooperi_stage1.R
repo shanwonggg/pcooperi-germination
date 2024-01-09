@@ -5,7 +5,7 @@
 #' Do seeds germinate increased proportions when cultured with Cerato
 #' and Tul OTUs obtained from the corresponding sites 
 #' of seed collection under their native ambient 
-#' temperature (15.5 0C)? 
+#' temperature (16C)? 
 
 
 #' I got the pure culture of the 4 fungi isolated from 
