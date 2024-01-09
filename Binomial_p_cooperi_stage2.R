@@ -1,5 +1,3 @@
-#' Highland Statistics Ltd.
-#' www.highstat.com
 
 # Section 1: Data description----
 
@@ -976,9 +974,6 @@ plotResiduals(E3BINqr, form = s4$ftemp, xlab = "Rank-transformed pop")
 #' temp has a lot of within- variations 
 
 # Section 17: Simulation----
-testZeroInflation(M5)
-#' not working with M5. Go stimulate
-
 
 # The simulation function does also work for the beta GLMM:
 Ysim <- simulate(M5, 1000)
@@ -1235,4 +1230,4 @@ summary(glht(M5, mcp(ffun="Tukey")))
 
 #' K comparison between models
 AIC(M3, M4, M5)
-#M2 has a lower AIC overall and provides the best fit
+#M5 has a lower AIC overall and provides the best fit
