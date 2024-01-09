@@ -22,9 +22,6 @@
 
 
 #' The data were collected in 124 days. 
-#' I counted how many seeds were germinated (stage 1), or developed to stage 2 (formation of protocorm),
-#' stage 3 (continued leaf enlargement). Since 124 days displayed all the stages of germination, 
-#' we only use data collected in 124 days
 
 
 #'   Germination success was determined as the number of seeds germinated per 
