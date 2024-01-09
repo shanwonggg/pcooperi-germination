@@ -45,7 +45,7 @@
 #'  Fungi: The four fungi used in experiment. They are named pev_cerato, pev_tul,
 #'  FF_cerato, and FF_tul
 #'  Temperature: The two tempeatures of experiments taken placed. They are 
-#'  15C and 23C
+#'  15C and 22C
 #'  Populations: The two populations where the seeds collected from. They are
 #'  FF and MX
 
