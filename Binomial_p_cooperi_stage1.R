@@ -1,5 +1,3 @@
-#' Highland Statistics Ltd.
-#' www.highstat.com
 
 # Section 1: Data description----
 
@@ -20,10 +18,10 @@
 #' I put 50 – 100 seeds in each plate. 
 #' For the incubate temperature, one complete set (of above design) incubated 
 #' at Room Temperature; another complete set (of above design)
-#' at 15.5C + 50% humidity. 
+#' at 16C + 50% humidity. 
 
 
-#' The data were collected in day 30 days, 60 days, and 124 days. 
+#' The data were collected in 124 days. 
 #' I counted how many seeds were germinated (stage 1), or developed to stage 2 (formation of protocorm),
 #' stage 3 (continued leaf enlargement). Since 124 days displayed all the stages of germination, 
 #' we only use data collected in 124 days
@@ -955,7 +953,7 @@ multcomp::cld(emmeans_M2,
           Letters=letters,
           adjust="tukey",
           decreasing = TRUE)
-summary(glht(M5, mcp(ffun="Tukey")))
+summary(glht(M2, mcp(ffun="Tukey")))
 
 #' K comparison between models
 AIC(M1, M2)
