@@ -1,39 +1,40 @@
 #  Section 1: Import the data and load the packages----
-s2 <- read.csv("s2r.csv", header = TRUE)
+s5 <- read.csv(file = "s5r.csv", 
+               header = TRUE)
 s4 <- read.csv("s4r.csv", header = TRUE)
 Pkgs2Load <- c("lattice", "ggplot2", "mgcv", "plyr", "MASS", 
                "pscl", "glmmTMB", "DHARMa", "cowplot", "rgl", 
                "GGally", "stringi", "performance", "emmeans", 
-               "scales", "multcomp")
+               "scales", "multcomp", "viridis", "tidyverse", "hrbrthemes", "car")
 invisible(lapply(Pkgs2Load, library, character.only = TRUE))
+
 # Follow outline Zuur et al. (2010) before running model
-# Section 2: ZIB GLMM----
-#' See what is binomial notes
-Failure <- s2$num - s2$success1
-M2 <- glmmTMB(cbind(success1,Failure) ~ fpop*ftemp*ffun,
+
+# Section 2: ZIB GLMM---- (Germination)
+s5$Failure <- s5$num - s5$total_count
+M8 <- glmmTMB(cbind(total_count,Failure) ~ fpop*ftemp*ffun,
               family = "binomial",
               ziformula =~ 1,
-              data = s2)
-glmmTMB:::Anova.glmmTMB(M2, test.statistic = c("Chisq"))
+              data = s5)
+glmmTMB:::Anova.glmmTMB(M8, test.statistic = c("Chisq"))
 #* Subsection 2.1 Model validation--------  
-F1 <- fitted(M2)
-E1 <- resid(M2, type = "pearson")
+F1 <- fitted(M8)
+E1 <- resid(M8, type = "pearson")
 X <- model.matrix(~ fpop*ftemp*ffun,
-                  data = s2)
-beta.count <- fixef(M2)$cond
+                  data = s5)
+beta.count <- fixef(M8)$cond
 eta.count <- X %*% beta.count
 P <- exp(eta.count) / (1 + exp(eta.count))
-gamma  <- summary(M2)$coefficients$zi[1,"Estimate"] 
+gamma  <- summary(M8)$coefficients$zi[1,"Estimate"] 
 Pi <- exp(gamma) / (1 + exp(gamma))
 Pi
-Ntrials <- s2$num
+Ntrials <- s5$num
 mu      <- Ntrials * P
 ExpY    <- (1 - Pi) * mu
 V    <- Ntrials * P * (1 - P)
 VarY <- (1 - Pi) * (V + mu^2) - (1 - Pi)^2  * mu^2 
-PRes2 <- (s2$count - ExpY) / sqrt(VarY)
-testDispersion(M2)
-#' It's 0.95. Very close to 1. accept
+PRes2 <- (s5$total_count - ExpY) / sqrt(VarY)
+testDispersion(M8)
 
 # Section 3: Model Validation ZIB GLMM----     
 #* Subsection 3.1: residuals vs fitted values and covariates----
@@ -44,77 +45,66 @@ plot(x = ExpY,
      xlab = "Fitted values",
      ylab = "Pearson residuals")
 abline(h = 0, lty = 2)            
-#' better than the binomial GLMM!
-
 #' Residuals vs fun.
-s2$PRes2 <- PRes2
+s5$PRes2 <- PRes2
 p <- ggplot()
-p <- p + geom_boxplot(data = s2, 
+p <- p + geom_boxplot(data = s5, 
                       aes(y = PRes2, 
                           x = ffun))
 p <- p + xlab("fun") + ylab("Pearson residuals")
 p <- p + theme(text = element_text(size=15)) 
 p <- p + geom_hline(yintercept = 0, lty = 2)
 p 
-#' ok
-
 #' Residuals vs temp.
 p <- ggplot()
-p <- p + geom_boxplot(data = s2, 
+p <- p + geom_boxplot(data = s5, 
                       aes(y = PRes2, 
                           x = ftemp))
 p <- p + xlab("temp") + ylab("Pearson residuals")
 p <- p + theme(text = element_text(size=15)) 
 p <- p + geom_hline(yintercept = 0, lty = 2)
 p 
-#' okay
-
 #' Residuals vs pop.
 p <- ggplot()
-p <- p + geom_boxplot(data = s2, 
+p <- p + geom_boxplot(data = s5, 
                       aes(y = PRes2, 
                           x = fpop))
 p <- p + xlab("pop") + ylab("Pearson residuals")
 p <- p + theme(text = element_text(size=15)) 
 p <- p + geom_hline(yintercept = 0, lty = 2)
 p 
-#' OK
-E2BINqr <- simulateResiduals(fittedModel = M2, plot = FALSE)
+E2BINqr <- simulateResiduals(fittedModel = M8, plot = FALSE)
 plotQQunif(E2BINqr, testUniformity = TRUE, 
            testOutliers = TRUE, testDispersion = TRUE)
-#' better than the binomial GLMM!
-#' see class videos, notes, and zuur 2009. not to worry.
-
 #' The scaled quantile residuals versus fitted values.
 plotResiduals(E2BINqr, quantreg = TRUE, smoothScatter = FALSE) 
-#still acceptable as other parts of DHARMS still look good! 
-#see class videos and notes - the within variation is normally occurred. not to worry.
+
 #* Subsection 3.2: Simulation for zero-inflation ----
-testZeroInflation(M2)
-#' Pretty accurate 
+testZeroInflation(M8)
+
 # Section 4: Visualise the results of the binomial GLMM----
-MyData <- ddply(s2, 
+MyData <- ddply(s5, 
                 .(fpop, ffun, ftemp), summarize,
-                stage = seq(from = min(s2$stage), 
-                                  to   = max(s2$stage), 
-                                  length = 50))
+                stage = seq(from = min(s5$stage), 
+                            to   = max(s5$stage), 
+                            length = 50))
 MyData <- MyData[ , -which(names(MyData) %in% c("stage"))]
 head(MyData)
 Xp <- model.matrix(~ ffun * fpop * ftemp, 
                    data = MyData)
 Xp
-Betas      <- fixef(M2)$cond
+Betas      <- fixef(M8)$cond
 MyData$eta <- Xp %*% Betas 
 MyData$P   <- exp(MyData$eta) / (1 + exp(MyData$eta))
-MyData$SE   <- sqrt(  diag(Xp %*% vcov(M2)$cond %*% t(Xp))  )
+MyData$SE   <- sqrt(  diag(Xp %*% vcov(M8)$cond %*% t(Xp))  )
 MyData$SeUp <- exp(MyData$eta + 1.96 * MyData$SE) / (1 + exp(MyData$eta + 1.96 * MyData$SE))
 MyData$SeLo <- exp(MyData$eta - 1.96 * MyData$SE) / (1 + exp(MyData$eta - 1.96 * MyData$SE))
 
-s2$Success= s2$count/s2$num
+s5$success = s5$total_count/s5$num
 p1 <- ggplot()
-p1 <- p1 + geom_point(data = s2, 
-                      aes(y = Success, x = ffun))
-p1 <- p1 + xlab("Fungi") + ylab("Germination")
+p1 <- p1 + geom_point(data = s5, 
+                      aes(y = success, x = ffun))
+p1 <- p1 + xlab("Fungi") + ylab("Probability of success")
 p1 <- p1 + theme(text = element_text(size = 15)) 
 p1 <- p1 + geom_point(data = MyData, 
                       aes(x = ffun, 
@@ -127,20 +117,19 @@ p1 <- p1 + geom_errorbar(data = MyData,
                          colour="red")
 p1 <- p1 + facet_grid(ftemp~fpop, scales = "fixed")
 p1
-#' It is the fitted value for the interaction of ffun, fpop, and ftemp + 95% 
-#' interval. 
 
-# Section 5: Beta glmm----
+# Section 5: Beta glmm----(Protocorm formation)
 s4$PER <- s4$per / 100
-#' See what is beta notes for the transformation.
 N <- nrow(s4)
 s4$PERT <- (s4$PER * (N - 1) + 0.5 ) / N
 M5 <- glmmTMB(PERT ~ fpop*ffun*ftemp,
               family = beta_family(link = "logit"), 
               data = s4)
+
 # Section 6: Model validation----
 E1 <- resid(M5, type = "pearson")
 F1 <- fitted(M5)
+
 #* Subsection 6.1: residuals versus fitted values----
 par(mfrow = c(1, 1))
 plot(x = F1, 
@@ -158,7 +147,6 @@ p <- p + xlab("fun") + ylab("Pearson residuals")
 p <- p + theme(text = element_text(size=15)) 
 p <- p + geom_hline(yintercept = 0, lty = 2)
 p 
-#' ok
 #' Residuals vs temp.
 p <- ggplot()
 p <- p + geom_boxplot(data = s4, 
@@ -168,7 +156,6 @@ p <- p + xlab("temp") + ylab("Pearson residuals")
 p <- p + theme(text = element_text(size=15)) 
 p <- p + geom_hline(yintercept = 0, lty = 2)
 p 
-#' okay
 #' Residuals vs pop.
 p <- ggplot()
 p <- p + geom_boxplot(data = s4, 
@@ -178,23 +165,18 @@ p <- p + xlab("pop") + ylab("Pearson residuals")
 p <- p + theme(text = element_text(size=15)) 
 p <- p + geom_hline(yintercept = 0, lty = 2)
 p 
-#' OK
+
 # Section 6.2: overdispersion----
 E1 <- resid(M5, type = "pearson")
 N    <- nrow(s4)
 Npar <- length(fixef(M5)$cond) + 1 
 testDispersion(M5)
-#'0.82. closed to 1. accept
-#' see videos and notes on overdispersion and underdispersion
-#'  DHARMa tell us?
 E3BINqr <- simulateResiduals(fittedModel = M5, plot = FALSE)
 plotQQunif(E3BINqr, testUniformity = TRUE, 
            testOutliers = TRUE, testDispersion = TRUE)
-#' okay. don't expect too much from DHARMa.
-#' did residuals above
 #' Plot the scaled quantile residuals versus fitted values.
 plotResiduals(E3BINqr, quantreg = TRUE, smoothScatter = FALSE) 
-#see class videos and notes - the within variation is normally occurred. not to worry.
+
 # Section 7: Simulation Zero inflation----
 Ysim <- simulate(M5, 1000)
 Ysim[,1]
@@ -233,7 +215,7 @@ p <- p + geom_point(data = DataOriginal,
                     size = 4)
 p <- p + xlab("Frequeny") + xlab("p_germinating success (in bins")
 p
-#'  the model is good to predict numbers in zero inflation
+
 # Section 8: Visualise the results of the beta GLMM (check the fit)----
 MyData <- ddply(s4, 
                 .(fpop, ffun, ftemp), summarize,
@@ -272,5 +254,3 @@ p1 <- p1 + geom_errorbar(data = MyData,
                          colour="red")
 p1 <- p1 + facet_grid(ftemp~fpop, scales = "fixed")
 p1
-#' It is the fitted value for the interaction of ffun, fpop, and ftemp + 95% 
-#' interval. better than zero=inflated binomal and beta models. 
